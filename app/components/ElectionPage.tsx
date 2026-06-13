@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { CandidateCard } from "./CandidateCard";
@@ -12,7 +13,7 @@ export interface Candidate {
 	name: string;
 	position: string;
 	imageUrl: string;
-	manifesto: string; // 👈 Updated type to string to accurately map your DB column
+	manifesto: string;
 	votes?: number;
 }
 
@@ -23,68 +24,71 @@ interface ManifestoModalProps {
 
 const DEFAULT_END_TIME = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
 
-const DEFAULT_CANDIDATES: Candidate[] = [
-	{
-		id: "1",
-		name: "Alexandra Chen",
-		position: "Student President",
-		imageUrl:
-			"https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-		manifesto:
-			"Establish a student wellness fund with quarterly mental health workshops.\nIntroduce transparent budget reporting accessible to all students.\nPartner with local businesses for internship pipelines for graduating students.",
-		votes: 312,
-	},
-	{
-		id: "2",
-		name: "Priya Okafor",
-		position: "Vice President",
-		imageUrl:
-			"https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-		manifesto:
-			"Redesign academic advising with a peer-mentorship co-model.\nAdvocate for extended library hours during examination periods.\nDigitise all administrative forms to reduce bureaucratic friction.",
-		votes: 278,
-	},
-];
-
 export function ElectionPage() {
-	const [candidates, setCandidates] = useState<Candidate[]>(DEFAULT_CANDIDATES);
-	const [electionEndTime, setElectionEndTime] = useState<Date | null>(
-		DEFAULT_END_TIME,
-	);
-	const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+	const [candidates, setCandidates] = useState<Candidate[]>([]);
+	const [electionId, setElectionId] = useState<string | null>(null);
+	const [electionEndTime, setElectionEndTime] =
+		useState<Date>(DEFAULT_END_TIME);
+	const [votedPositions, setVotedPositions] = useState<Set<string>>(new Set());
 	const [manifestoCandidate, setManifestoCandidate] =
 		useState<Candidate | null>(null);
 
 	useEffect(() => {
+		// 1. Fetch active election
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/elections/active`, {
 			credentials: "include",
 		})
-			.then((res) => {
-				if (!res.ok) throw new Error("Server response error");
-				return res.json();
-			})
+			.then((res) => res.json())
 			.then((data) => {
-				if (data && data.endTime) {
-					setElectionEndTime(new Date(data.endTime));
-				}
-				if (data && data.candidates && data.candidates.length > 0) {
-					setCandidates(data.candidates);
-				}
+				if (!data) return;
+				setElectionId(data.id);
+				setElectionEndTime(new Date(data.endTime));
+				setCandidates(data.candidates || []);
+
+				// 2. Fetch what positions the user has already voted for
+				return fetch(
+					`${process.env.NEXT_PUBLIC_API_URL}/elections/${data.id}/has-voted`,
+					{ credentials: "include" },
+				);
 			})
-			.catch((err) =>
-				console.log(
-					"Live active election data unavailable, using local mock defaults instead.",
-					err,
-				),
-			);
+			.then((res) => res?.json())
+			.then((votedPos) => setVotedPositions(new Set(votedPos)))
+			.catch((err) => console.error("Data fetch error:", err));
 	}, []);
 
-	function handleVote(id: string) {
-		setVotedIds((prev) => {
-			const next = new Set(prev);
-			next.add(id);
-			return next;
-		});
+	async function handleVote(candidate: Candidate) {
+		if (!electionId) return;
+
+		try {
+			const res = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/elections/vote`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						election_id: electionId,
+						candidate_id: candidate.id,
+						position: candidate.position,
+					}),
+					credentials: "include",
+				},
+			);
+
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.message || "Failed to vote");
+			}
+
+			// Update UI state to lock this position
+			setVotedPositions((prev) => new Set(prev).add(candidate.position));
+			toast.success("Vote recorded successfully!");
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				console.error("Vote error:", err);
+			} else {
+				toast.error("You have already voted for this position.");
+			}
+		}
 	}
 
 	return (
@@ -112,7 +116,7 @@ export function ElectionPage() {
 					<div className="flex items-center justify-between mb-5">
 						<h2 className="font-semibold text-gray-800">Candidate Overview</h2>
 						<span className="text-sm text-gray-400">
-							{votedIds.size} of {candidates.length || 0} votes cast
+							{votedPositions.size} of {candidates.length || 0} votes cast
 						</span>
 					</div>
 
@@ -123,40 +127,12 @@ export function ElectionPage() {
 								name={candidate.name}
 								position={candidate.position}
 								imageUrl={candidate.imageUrl}
-								hasVoted={votedIds.has(candidate.id)}
-								onVote={() => handleVote(candidate.id)}
+								hasVoted={votedPositions.has(candidate.position)}
+								onVote={() => handleVote(candidate)}
 								onViewManifesto={() => setManifestoCandidate(candidate)}
 							/>
 						))}
 					</div>
-
-					{candidates.length > 0 && (
-						<div className="mt-6 bg-white rounded-2xl p-5 flex items-center gap-5 shadow-sm border border-slate-100">
-							<div className="flex-1">
-								<div className="flex items-center justify-between mb-2">
-									<span className="text-sm text-gray-500">
-										Your voting progress
-									</span>
-									<span className="text-sm font-semibold text-[#002B5B]">
-										{votedIds.size} / {candidates.length}
-									</span>
-								</div>
-								<div className="w-full h-2 rounded-full bg-[#002B5B]/10">
-									<div
-										className="h-2 rounded-full transition-all duration-500 bg-[#002B5B]"
-										style={{
-											width: `${(votedIds.size / candidates.length) * 100}%`,
-										}}
-									/>
-								</div>
-							</div>
-							{votedIds.size === candidates.length && (
-								<div className="shrink-0 text-sm px-4 py-2 rounded-xl text-white bg-[#00874a]">
-									All votes submitted ✓
-								</div>
-							)}
-						</div>
-					)}
 				</div>
 
 				<div className="w-full lg:w-[30%] lg:sticky lg:top-6 flex flex-col gap-5">
@@ -181,31 +157,17 @@ export function ElectionPage() {
 }
 
 function ManifestoModal({ candidate, onClose }: ManifestoModalProps) {
-	useEffect(() => {
-		if (candidate) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [candidate]);
-
 	if (!candidate) return null;
-
-	// 👈 Converts the text string field from your Neon DB into cleanly scannable lines
 	const points = candidate.manifesto
 		? candidate.manifesto.split("\n").filter((p) => p.trim() !== "")
 		: [];
-
 	return (
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/45 backdrop-blur-sm"
 			onClick={onClose}
 		>
 			<div
-				className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-[0_25px_60px_rgba(0,43,91,0.2)]"
+				className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<button
@@ -214,14 +176,13 @@ function ManifestoModal({ candidate, onClose }: ManifestoModalProps) {
 				>
 					<X className="w-5 h-5" />
 				</button>
-
 				<div className="flex items-center gap-4 mb-6">
 					<Image
-						src={candidate.imageUrl || "/placeholders/avatar.png"}
+						src={candidate.imageUrl}
 						alt={candidate.name}
-						className="w-14 h-14 rounded-full object-cover object-top"
 						width={56}
 						height={56}
+						className="w-14 h-14 rounded-full object-cover object-top"
 						unoptimized
 					/>
 					<div>
@@ -231,29 +192,21 @@ function ManifestoModal({ candidate, onClose }: ManifestoModalProps) {
 						</span>
 					</div>
 				</div>
-
 				<h3 className="text-gray-700 mb-3 font-semibold text-sm">
 					Key Commitments
 				</h3>
-
 				<ul className="flex flex-col gap-3">
-					{points.length > 0 ? (
-						points.map((point, i) => (
-							<li
-								key={i}
-								className="flex items-start gap-3"
-							>
-								<span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white mt-0.5 bg-[#002B5B] text-[10px]">
-									{i + 1}
-								</span>
-								<p className="text-gray-600 text-sm leading-snug">{point}</p>
-							</li>
-						))
-					) : (
-						<p className="text-sm text-slate-500 italic">
-							No commitments listed in candidate registration.
-						</p>
-					)}
+					{points.map((point, i) => (
+						<li
+							key={i}
+							className="flex items-start gap-3"
+						>
+							<span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white mt-0.5 bg-[#002B5B] text-[10px]">
+								{i + 1}
+							</span>
+							<p className="text-gray-600 text-sm leading-snug">{point}</p>
+						</li>
+					))}
 				</ul>
 			</div>
 		</div>
