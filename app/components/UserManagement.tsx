@@ -4,18 +4,7 @@ import React, { useState } from "react";
 import { Search, Trash2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-interface UserProfile {
-	id: string;
-	email: string;
-	name: string;
-	matric?: string;
-	level?: string | number;
-	graduation_year?: string | number;
-	role: string;
-	isSuspended: boolean;
-	avatar: string;
-}
+import { UserProfile } from "@/types";
 
 export function UserManagement() {
 	const [searchQuery, setSearchQuery] = useState("");

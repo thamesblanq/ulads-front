@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
 	PlusCircle,
 	UserPlus,
@@ -7,13 +7,14 @@ import {
 	Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActiveElection as Election } from "@/types";
 
-interface Election {
-	id: string;
-	title: string;
-}
-
-export function CreateElectionForm() {
+export function CreateElectionForm({
+	initialElections,
+}: {
+	initialElections: Election[];
+}) {
+	const [elections, setElections] = useState<Election[]>(initialElections);
 	// --- Election Creation State ---
 	const [title, setTitle] = useState("");
 	const [startTime, setStartTime] = useState("");
@@ -21,7 +22,6 @@ export function CreateElectionForm() {
 	const [isCreating, setIsCreating] = useState(false);
 
 	// --- Candidate Add State ---
-	const [elections, setElections] = useState<Election[]>([]);
 	const [targetElectionId, setTargetElectionId] = useState("");
 	const [candidateEmail, setCandidateEmail] = useState("");
 	const [position, setPosition] = useState("");
@@ -29,48 +29,19 @@ export function CreateElectionForm() {
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [isRegistering, setIsRegistering] = useState(false);
 
-	// 1. Fetch ALL elections
-	const fetchElections = useCallback(async () => {
-		try {
-			// Ensure your backend has a route /elections/all that uses getAllElections()
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/elections/all`,
-				{
-					method: "GET",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-				},
-			);
+	// Call this after a successful creation to keep the list synced
+	const refreshElections = async () => {
+		const res = await fetch(
+			`${process.env.NEXT_PUBLIC_API_URL}/elections/all`,
+			{ credentials: "include" },
+		);
+		if (res.ok) setElections(await res.json());
+	};
 
-			if (response.ok) {
-				const data = await response.json();
-				setElections(data);
-
-				// Auto-select first if available
-				if (data.length > 0 && !targetElectionId) {
-					setTargetElectionId(data[0].id);
-				}
-			}
-		} catch (error) {
-			console.error("Failed to load elections list", error);
-		}
-	}, [targetElectionId]);
-
-	useEffect(() => {
-		// Define an async function inside the effect
-		const loadInitialData = async () => {
-			await fetchElections();
-		};
-
-		loadInitialData();
-	}, [fetchElections]);
-
-	// 2. Handle Create Election
+	// Update handleCreateElection to refresh internal state
 	const handleCreateElection = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!title || !startTime || !endTime) return;
 		setIsCreating(true);
-
 		try {
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/elections`,
@@ -87,18 +58,14 @@ export function CreateElectionForm() {
 			);
 
 			if (!response.ok) throw new Error("Could not create election.");
-			const data = await response.json();
-
 			toast.success("Election successfully scheduled!");
+			await refreshElections(); // Sync the dropdown
 			setTitle("");
 			setStartTime("");
 			setEndTime("");
-			await fetchElections();
-			setTargetElectionId(data.id);
-		} catch (error: unknown) {
-			toast.error(
-				error instanceof Error ? error.message : "Election creation failed.",
-			);
+		} catch (error) {
+			console.error("Error creating election:", error);
+			toast.error("Election creation failed.");
 		} finally {
 			setIsCreating(false);
 		}

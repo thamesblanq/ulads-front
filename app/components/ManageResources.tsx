@@ -10,17 +10,10 @@ import {
 	RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Resource } from "@/types";
 
 const BRAND_BLUE = "#002B5B";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-interface Resource {
-	id: string;
-	title: string;
-	course_code: string;
-	class_level: string;
-	drive_url: string;
-}
 
 export function ManageResources() {
 	const [resources, setResources] = useState<Resource[]>([]);

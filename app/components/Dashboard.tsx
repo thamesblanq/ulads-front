@@ -1,56 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { MessageSquare, CreditCard, UserCheck, Clock } from "lucide-react";
-import { UserProfile, ActiveElection } from "@/types";
+import { ActiveElection, UserProfile } from "@/types";
 
-export default function DashboardPage() {
-	const router = useRouter();
-
-	// Explicitly typed states
-	const [userData, setUserData] = useState<UserProfile | null>(null);
-	const [activeElection, setActiveElection] = useState<ActiveElection | null>(
-		null,
-	);
-	const [isLoading, setIsLoading] = useState(true);
-
-	useEffect(() => {
-		const loadDashboardData = async () => {
-			setIsLoading(true);
-			try {
-				const [userRes, electionRes] = await Promise.all([
-					fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
-						credentials: "include",
-					}),
-					fetch(`${process.env.NEXT_PUBLIC_API_URL}/elections/active`, {
-						credentials: "include",
-					}),
-				]);
-
-				if (userRes.status === 401) {
-					router.push("/login");
-					return;
-				}
-
-				if (userRes.ok) {
-					const data: UserProfile = await userRes.json();
-					setUserData(data);
-				}
-
-				if (electionRes.ok) {
-					const data: ActiveElection | null = await electionRes.json();
-					setActiveElection(data);
-				}
-			} catch (err) {
-				console.error("Failed to load dashboard data", err);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		loadDashboardData();
-	}, [router]);
+export default function DashboardPage({
+	initialElection,
+	initialUser,
+}: {
+	initialElection: ActiveElection | null;
+	initialUser: UserProfile | null;
+}) {
+	const activeElection = initialElection;
+	const userData = initialUser;
 
 	const getElectionSubtitle = (): string => {
 		if (!activeElection) return "No active elections";
@@ -60,14 +21,6 @@ export default function DashboardPage() {
 		);
 		return days > 0 ? `Ends in ${days} day(s)` : "Ending today";
 	};
-
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002B5B]"></div>
-			</div>
-		);
-	}
 
 	return (
 		<div className="space-y-8 animate-in fade-in duration-500">

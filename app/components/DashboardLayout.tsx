@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
 	ShieldAlert,
 	LogOut,
 } from "lucide-react";
+import { UserProfile } from "@/types";
 
 const LetterAvatar = ({
 	email,
@@ -43,40 +44,24 @@ const LetterAvatar = ({
 
 export default function DashboardLayout({
 	children,
+	initialUser,
 }: {
 	children: React.ReactNode;
+	initialUser: UserProfile | null;
 }) {
-	const [user, setUser] = useState<{
-		email: string;
-		role: string;
-		full_name: string;
-	} | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [user] = useState(initialUser);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	const pathname = usePathname();
 	const router = useRouter();
 
-	useEffect(() => {
-		const fetchUser = async () => {
-			try {
-				const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
-					credentials: "include",
-				});
-				if (!res.ok) throw new Error("Unauthorized");
-				const data = await res.json();
-				setUser(data);
-			} catch (err) {
-				console.error("Failed to fetch user:", err);
-				toast.error("Session expired.");
-				router.push("/login");
-			} finally {
-				setIsLoading(false);
-			}
-		};
-		fetchUser();
-	}, [router]);
+	// Check for user existence
+	if (!user) {
+		// Redirect to login if no user data found
+		router.push("/login");
+		return null;
+	}
 
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
@@ -88,21 +73,12 @@ export default function DashboardLayout({
 			toast.success("Logged out!");
 			router.push("/");
 		} catch (error) {
-			console.error("Logout failed:", error);
-			toast.error("Failed to log out.");
-			router.push("/");
+			console.error("Logout error:", error);
+			toast.error("Logout failed.");
 		} finally {
 			setIsLoggingOut(false);
 		}
 	};
-
-	if (isLoading)
-		return (
-			<div className="h-screen flex items-center justify-center">
-				Loading...
-			</div>
-		);
-	if (!user) return null;
 
 	const visibleNavItems = [
 		{ icon: Home, label: "Dashboard", href: "/dashboard", visible: true },

@@ -9,7 +9,7 @@ import {
 	Cell,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
-import { Candidate } from "./ElectionPage";
+import { Candidate } from "../../types";
 
 interface TooltipItem {
 	value: number | string;

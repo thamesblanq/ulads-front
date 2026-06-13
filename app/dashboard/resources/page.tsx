@@ -1,14 +1,23 @@
-import { Metadata } from "next"; // 👈 Import Metadata type
-import { ResourcePage } from "../../components/ResourcePage"; // 👈 Import the ResourcePage component
+import { Metadata } from "next";
+import { cookies } from "next/headers";
+import { ResourcePage } from "../../components/ResourcePage";
 
-// 1. Define the metadata for this specific page
 export const metadata: Metadata = {
 	title: "Academic Resources | ULADS Portal",
-	description:
-		"Access study materials, past questions, and lecture notes for all levels.",
+	description: "Access study materials, past questions, and lecture notes.",
 };
 
-// 2. Export your page component
-export default function ResourcesDashboardPage() {
-	return <ResourcePage />;
+export default async function ResourcesDashboardPage() {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("jwt");
+
+	// Fetch the real resources from your API
+	const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resources`, {
+		headers: { Cookie: token ? `jwt=${token.value}` : "" },
+		cache: "no-store",
+	});
+
+	const resources = res.ok ? await res.json() : [];
+
+	return <ResourcePage initialResources={resources} />;
 }

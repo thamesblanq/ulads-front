@@ -1,33 +1,37 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google"; // 👈 1. Import the modern font
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
+import { cn } from "@/lib/utils";
 
-// 2. Configure the font and name the variable exactly what CSS expects
 const jakarta = Plus_Jakarta_Sans({
-	variable: "--font-sans", // 👈 Changed to match globals.css!
+	variable: "--font-sans",
 	subsets: ["latin"],
 	weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-	title: "ULADS Portal",
-	description: "University of Lagos Association of Dental Students",
+	title: {
+		default: "ULADS Portal",
+		template: "%s | ULADS Portal",
+	},
+	description:
+		"Official digital hub for the University of Lagos Association of Dental Students.",
 };
 
 export default function RootLayout({
 	children,
-}: Readonly<{
-	children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html
 			lang="en"
-			className={`${jakarta.variable} h-full antialiased`}
+			className="h-full"
+			suppressHydrationWarning
 		>
-			{/* 3. Added font-sans here to ensure it applies globally */}
-			<body className="min-h-full flex flex-col font-sans">
+			<body
+				className={cn("min-h-screen font-sans antialiased", jakarta.variable)}
+			>
 				{children}
 				<Analytics />
 				<Toaster

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import Image from "next/image";
@@ -7,57 +7,25 @@ import { CandidateCard } from "./CandidateCard";
 import { CountdownTimer } from "./CountdownTimer";
 import { LiveStatsChart } from "./LiveStatsChart";
 import { ActivityHistory } from "./ActivityHistory";
+import { ActiveElection, Candidate, ManifestoModalProps } from "../../types";
 
-export interface Candidate {
-	id: string;
-	name: string;
-	position: string;
-	imageUrl: string;
-	manifesto: string;
-	votes?: number;
-}
+export function ElectionPage({
+	initialElection,
+	initialVotedPositions,
+}: {
+	initialElection: ActiveElection;
+	initialVotedPositions: string[];
+}) {
+	const [election] = useState<ActiveElection | null>(initialElection);
+	const [votedPositions, setVotedPositions] = useState<Set<string>>(
+		new Set(initialVotedPositions),
+	);
 
-interface ManifestoModalProps {
-	candidate: Candidate | null;
-	onClose: () => void;
-}
-
-const DEFAULT_END_TIME = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-
-export function ElectionPage() {
-	const [candidates, setCandidates] = useState<Candidate[]>([]);
-	const [electionId, setElectionId] = useState<string | null>(null);
-	const [electionEndTime, setElectionEndTime] =
-		useState<Date>(DEFAULT_END_TIME);
-	const [votedPositions, setVotedPositions] = useState<Set<string>>(new Set());
 	const [manifestoCandidate, setManifestoCandidate] =
 		useState<Candidate | null>(null);
 
-	useEffect(() => {
-		// 1. Fetch active election
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/elections/active`, {
-			credentials: "include",
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				if (!data) return;
-				setElectionId(data.id);
-				setElectionEndTime(new Date(data.endTime));
-				setCandidates(data.candidates || []);
-
-				// 2. Fetch what positions the user has already voted for
-				return fetch(
-					`${process.env.NEXT_PUBLIC_API_URL}/elections/${data.id}/has-voted`,
-					{ credentials: "include" },
-				);
-			})
-			.then((res) => res?.json())
-			.then((votedPos) => setVotedPositions(new Set(votedPos)))
-			.catch((err) => console.error("Data fetch error:", err));
-	}, []);
-
 	async function handleVote(candidate: Candidate) {
-		if (!electionId) return;
+		if (!election?.id) return;
 
 		try {
 			const res = await fetch(
@@ -66,7 +34,7 @@ export function ElectionPage() {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
-						election_id: electionId,
+						election_id: election.id,
 						candidate_id: candidate.id,
 						position: candidate.position,
 					}),
@@ -79,33 +47,26 @@ export function ElectionPage() {
 				throw new Error(error.message || "Failed to vote");
 			}
 
-			// Update UI state to lock this position
 			setVotedPositions((prev) => new Set(prev).add(candidate.position));
 			toast.success("Vote recorded successfully!");
 		} catch (err: unknown) {
 			if (err instanceof Error) {
-				console.error("Vote error:", err);
-			} else {
-				toast.error("You have already voted for this position.");
+				toast.error(err.message);
 			}
 		}
 	}
 
+	if (!election)
+		return (
+			<div className="p-8 text-center text-gray-500">
+				No active elections at the moment.
+			</div>
+		);
+
 	return (
 		<div className="max-w-7xl mx-auto py-6 bg-[#f7f8fb]">
 			<div className="mb-8">
-				<div className="flex items-center gap-2 mb-1">
-					<span className="text-xs uppercase tracking-widest text-gray-400">
-						Academic Year 2025–2026
-					</span>
-					<span className="w-1 h-1 rounded-full bg-slate-300" />
-					<span className="text-xs uppercase tracking-widest text-[#002B5B]">
-						Open Election
-					</span>
-				</div>
-				<h1 className="text-2xl font-bold text-gray-900">
-					Student Council Elections
-				</h1>
+				<h1 className="text-2xl font-bold text-gray-900">{election.title}</h1>
 				<p className="text-gray-500 mt-1 text-sm">
 					Review each candidate&apos;s platform and cast your vote.
 				</p>
@@ -113,15 +74,8 @@ export function ElectionPage() {
 
 			<div className="flex flex-col lg:flex-row gap-8 items-start">
 				<div className="w-full lg:w-[70%]">
-					<div className="flex items-center justify-between mb-5">
-						<h2 className="font-semibold text-gray-800">Candidate Overview</h2>
-						<span className="text-sm text-gray-400">
-							{votedPositions.size} of {candidates.length || 0} votes cast
-						</span>
-					</div>
-
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-						{candidates.map((candidate) => (
+						{election.candidates.map((candidate) => (
 							<CandidateCard
 								key={candidate.id}
 								name={candidate.name}
@@ -137,14 +91,12 @@ export function ElectionPage() {
 
 				<div className="w-full lg:w-[30%] lg:sticky lg:top-6 flex flex-col gap-5">
 					<div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-						<CountdownTimer endTime={electionEndTime} />
+						<CountdownTimer endTime={new Date(election.endTime)} />
 					</div>
 					<div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-						<LiveStatsChart candidates={candidates} />
+						<LiveStatsChart candidates={election.candidates} />
 					</div>
-					<div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-						<ActivityHistory />
-					</div>
+					<ActivityHistory />
 				</div>
 			</div>
 

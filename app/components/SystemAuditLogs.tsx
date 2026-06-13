@@ -3,16 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-interface SystemLog {
-	id: string | number;
-	date: string;
-	email: string;
-	role: string;
-	route: string;
-	action: string;
-	status: number;
-}
+import { SystemLog } from "@/types";
 
 export function SystemAuditLogs() {
 	const [logs, setLogs] = useState<SystemLog[]>([]);

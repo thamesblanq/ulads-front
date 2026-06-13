@@ -36,10 +36,10 @@ export const Hero = () => {
 								<ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
 							</Link>
 							<Link
-								href="/about"
+								href="/"
 								className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#0A192F] font-bold rounded-xl border-2 border-gray-100 hover:border-[#0A192F] transition-all active:scale-95"
 							>
-								Learn More
+								Back to Home
 							</Link>
 						</div>
 
@@ -73,7 +73,7 @@ export const Hero = () => {
 						transition={{ duration: 0.6, delay: 0.2 }}
 						className="mt-16 lg:mt-0 relative"
 					>
-						<div className="relative rounded-2xl overflow-hidden shadow-2xl w-full h-[400px] lg:h-[500px]">
+						<div className="relative rounded-2xl overflow-hidden shadow-2xl w-full h-100 lg:h-125">
 							<ImageWithFallback
 								src={HERO_IMAGE}
 								alt="ULADS Dental Clinic"
@@ -82,7 +82,7 @@ export const Hero = () => {
 								sizes="(max-w-7xl) 50vw, 100vw"
 								className="object-cover"
 							/>
-							<div className="absolute inset-0 bg-gradient-to-t from-[#0A192F]/40 to-transparent" />
+							<div className="absolute inset-0 bg-linear-to-t from-[#0A192F]/40 to-transparent" />
 						</div>
 
 						{/* Decorative elements */}

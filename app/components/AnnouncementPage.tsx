@@ -1,24 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
-
-// 1. The interface for your UI component
-export interface Announcement {
-	id: string | number;
-	category: string;
-	date: string;
-	title: string;
-	description: string;
-}
-
-// 2. The interface for the raw data from your NestJS Backend
-interface BackendAnnouncement {
-	id: string;
-	category: string;
-	created_at: string; // The database field
-	title: string;
-	content: string; // The database field
-}
+import {
+	Announcement,
+	BackendAnnouncement,
+	mapBackendAnnouncementToUI,
+} from "../../types";
 
 const HARDCODED_ANNOUNCEMENTS: Announcement[] = [
 	{
@@ -30,40 +17,19 @@ const HARDCODED_ANNOUNCEMENTS: Announcement[] = [
 	},
 ];
 
-export function AnnouncementPage() {
-	const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+export function AnnouncementPage({
+	initialAnnouncements = [],
+}: {
+	initialAnnouncements?: BackendAnnouncement[];
+}) {
 	const [expandedId, setExpandedId] = useState<string | number | null>(null);
 
-	useEffect(() => {
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/announcements`, {
-			credentials: "include",
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				console.log("Backend response:", data); // 👈 THIS WILL TELL US THE PROBLEM
+	// Map the raw server data using the helper
+	const fetchedAnnouncements: Announcement[] = initialAnnouncements.map(
+		mapBackendAnnouncementToUI,
+	);
 
-				// Check if data is actually an array, or if it's inside an object property
-				const announcementArray = Array.isArray(data) ? data : data.data || [];
-
-				if (Array.isArray(announcementArray)) {
-					const dbData = announcementArray.map((item: BackendAnnouncement) => ({
-						id: item.id,
-						category: item.category,
-						date: item.created_at
-							? new Date(item.created_at).toLocaleDateString()
-							: "N/A",
-						title: item.title,
-						description: item.content,
-					}));
-					setAnnouncements(dbData);
-				} else {
-					console.error("Data received is not an array:", data);
-				}
-			})
-			.catch((err) => console.error("Error fetching announcements:", err));
-	}, []);
-
-	const combinedList = [...HARDCODED_ANNOUNCEMENTS, ...announcements];
+	const combinedList = [...HARDCODED_ANNOUNCEMENTS, ...fetchedAnnouncements];
 
 	return (
 		<div className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">

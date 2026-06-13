@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -20,14 +20,20 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { UserProfile } from "@/types";
 
 const ACADEMIC_LEVELS = ["100", "200", "300", "400", "500", "600"];
 
-export default function ProfilePage() {
+export default function ProfilePage({
+	initialUser,
+}: {
+	initialUser: UserProfile | null;
+}) {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
-	const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+	const [isProfileIncomplete, setIsProfileIncomplete] = useState(
+		!initialUser?.level || !initialUser?.graduation_year,
+	);
 
 	// 👇 Generates a massive 25-year range (e.g., 2011 to 2036)
 	const currentYear = new Date().getFullYear();
@@ -36,51 +42,10 @@ export default function ProfilePage() {
 	);
 
 	const [formData, setFormData] = useState({
-		full_name: "",
+		full_name: initialUser?.full_name || "",
 		level: "",
 		graduation_year: "",
 	});
-
-	useEffect(() => {
-		const fetchProfile = async () => {
-			try {
-				const response = await fetch(
-					`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-					{
-						method: "GET",
-						headers: { "Content-Type": "application/json" },
-						credentials: "include",
-					},
-				);
-
-				if (!response.ok) throw new Error("Failed to load profile");
-
-				const data = await response.json();
-
-				if (!data.level || !data.graduation_year) {
-					setIsProfileIncomplete(true);
-				}
-
-				setFormData({
-					full_name: data.full_name || "",
-					level: data.level ? String(data.level) : "",
-					graduation_year: data.graduation_year
-						? String(data.graduation_year)
-						: "",
-				});
-			} catch (error: unknown) {
-				if (error instanceof Error) {
-					toast.error(error.message);
-				} else {
-					toast.error("Could not load your profile data.");
-				}
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchProfile();
-	}, []);
 
 	const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -122,60 +87,38 @@ export default function ProfilePage() {
 				throw new Error(errorData.message || "Failed to save profile.");
 			}
 
-			if (isProfileIncomplete) {
-				setIsProfileIncomplete(false);
-				toast.success("Profile completed successfully!");
-			} else {
-				toast.success("Profile updated successfully!");
-			}
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				toast.error(error.message);
-			} else {
-				toast.error("An unexpected error occurred.");
-			}
+			if (isProfileIncomplete) setIsProfileIncomplete(false);
+			toast.success("Profile updated successfully!");
+		} catch (err: unknown) {
+			toast.error(err instanceof Error ? err.message : "An error occurred.");
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
 	const handleDelete = async () => {
-		const confirmDelete = window.confirm(
-			"Are you absolutely sure you want to deactivate your account? This action cannot be undone.",
-		);
-
-		if (!confirmDelete) return;
+		if (!window.confirm("Are you sure you want to deactivate your account?"))
+			return;
 
 		try {
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
 				{
 					method: "DELETE",
-					headers: { "Content-Type": "application/json" },
 					credentials: "include",
 				},
 			);
 
 			if (!response.ok) throw new Error("Failed to deactivate account.");
-
-			toast.success("Account deactivated. Logging you out...");
+			toast.success("Account deactivated.");
 			router.push("/login");
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				toast.error(error.message);
-			} else {
-				toast.error("An unexpected error occurred.");
-			}
+		} catch (err: unknown) {
+			toast.error(err instanceof Error ? err.message : "Error occurred.");
 		}
 	};
 
-	if (isLoading) {
-		return (
-			<div className="animate-pulse text-slate-500">
-				Loading profile data...
-			</div>
-		);
-	}
+	if (!initialUser)
+		return <div className="p-8 text-center">User not found.</div>;
 
 	return (
 		<div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
