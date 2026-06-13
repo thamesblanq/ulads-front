@@ -29,16 +29,16 @@ export default function LoginPage() {
 		setIsLoading(true);
 		setErrorMessage(""); // Clear any previous errors
 
+		const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+		const url = `${baseUrl}/auth/login`;
+
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ email, password }),
-					credentials: "include",
-				},
-			);
+			const response = await fetch(url, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, password }),
+				credentials: "include",
+			});
 
 			if (!response.ok) {
 				const errorData = await response.json();
