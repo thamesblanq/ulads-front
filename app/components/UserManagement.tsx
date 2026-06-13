@@ -191,7 +191,7 @@ export function UserManagement() {
 									foundUser.isSuspended && "line-through text-gray-400",
 								)}
 							>
-								{foundUser.name}
+								{foundUser.full_name}
 							</h4>
 							<p className="text-xs text-gray-500">{foundUser.email}</p>
 							<span className="text-[10px] font-bold uppercase bg-gray-100 px-1.5 py-0.5 rounded">
