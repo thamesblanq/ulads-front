@@ -31,10 +31,7 @@ export function CreateElectionForm({
 
 	// Call this after a successful creation to keep the list synced
 	const refreshElections = async () => {
-		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/elections/all`,
-			{ credentials: "include" },
-		);
+		const res = await fetch(`api/elections/all`, { credentials: "include" });
 		if (res.ok) setElections(await res.json());
 	};
 
@@ -43,19 +40,16 @@ export function CreateElectionForm({
 		e.preventDefault();
 		setIsCreating(true);
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/elections`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({
-						title,
-						start_time: startTime,
-						end_time: endTime,
-					}),
-				},
-			);
+			const response = await fetch(`api/elections`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({
+					title,
+					start_time: startTime,
+					end_time: endTime,
+				}),
+			});
 
 			if (!response.ok) throw new Error("Could not create election.");
 			toast.success("Election successfully scheduled!");
@@ -83,7 +77,7 @@ export function CreateElectionForm({
 		try {
 			// STEP 1: Verify Email and get User ID
 			const usersResponse = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/users/search-by-email?email=${encodeURIComponent(candidateEmail.trim())}`,
+				`api/users/search-by-email?email=${encodeURIComponent(candidateEmail.trim())}`,
 				{
 					method: "GET",
 					headers: { "Content-Type": "application/json" },
@@ -114,7 +108,7 @@ export function CreateElectionForm({
 
 			// STEP 3: Link to election
 			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/elections/${targetElectionId}/candidates`,
+				`api/elections/${targetElectionId}/candidates`,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },

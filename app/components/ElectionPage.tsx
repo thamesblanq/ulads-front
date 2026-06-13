@@ -28,19 +28,16 @@ export function ElectionPage({
 		if (!election?.id) return;
 
 		try {
-			const res = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/elections/vote`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						election_id: election.id,
-						candidate_id: candidate.id,
-						position: candidate.position,
-					}),
-					credentials: "include",
-				},
-			);
+			const res = await fetch(`api/elections/vote`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					election_id: election.id,
+					candidate_id: candidate.id,
+					position: candidate.position,
+				}),
+				credentials: "include",
+			});
 
 			if (!res.ok) {
 				const error = await res.json();

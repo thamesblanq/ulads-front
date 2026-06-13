@@ -72,15 +72,12 @@ export default function ProfilePage({
 			: "/users/me";
 
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}${targetEndpoint}`,
-				{
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify(payload),
-				},
-			);
+			const response = await fetch(`api${targetEndpoint}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify(payload),
+			});
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -101,13 +98,10 @@ export default function ProfilePage({
 			return;
 
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-				{
-					method: "DELETE",
-					credentials: "include",
-				},
-			);
+			const response = await fetch(`api/users/me`, {
+				method: "DELETE",
+				credentials: "include",
+			});
 
 			if (!response.ok) throw new Error("Failed to deactivate account.");
 			toast.success("Account deactivated.");

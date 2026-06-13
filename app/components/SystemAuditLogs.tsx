@@ -14,17 +14,14 @@ export function SystemAuditLogs() {
 	const [totalCount, setTotalCount] = useState(0);
 
 	const fetchLogs = useCallback(async (page: number) => {
-		const response = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/logs?page=${page}&limit=10`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					// Authorization: `Bearer ${localStorage.getItem('token')}` // Uncomment if using localStorage JWT
-				},
-				credentials: "include", // This is crucial for cookie-based sessions!
+		const response = await fetch(`api/logs?page=${page}&limit=10`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				// Authorization: `Bearer ${localStorage.getItem('token')}` // Uncomment if using localStorage JWT
 			},
-		);
+			credentials: "include", // This is crucial for cookie-based sessions!
+		});
 
 		if (!response.ok) {
 			console.error(

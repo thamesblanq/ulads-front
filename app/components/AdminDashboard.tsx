@@ -11,29 +11,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SystemLog, UserProfile } from "@/types";
 
 // 1. Strictly define our Types
-interface UserProfile {
-	id: string;
-	email: string;
-	name: string;
-	matric?: string;
-	level?: string | number;
-	graduation_year?: string | number;
-	role: string;
-	isSuspended: boolean;
-	avatar: string;
-}
-
-interface SystemLog {
-	id: string | number;
-	date: string;
-	email: string;
-	role: string;
-	route: string;
-	action: string;
-	status: number;
-}
 
 export default function AdminDashboard() {
 	// Search & UI States
@@ -85,6 +65,7 @@ export default function AdminDashboard() {
 					setTotalLogsCount(responseData.meta.total);
 				}
 			} catch (error: unknown) {
+				console.error(error);
 				if (isMounted) {
 					toast.error("Could not load system logs.");
 				}
@@ -114,6 +95,7 @@ export default function AdminDashboard() {
 			setTotalLogsCount(responseData.meta.total);
 			toast.success("Logs updated");
 		} catch (error: unknown) {
+			console.error(error);
 			toast.error("Could not refresh system logs.");
 		} finally {
 			setIsRefreshing(false);
@@ -158,6 +140,7 @@ export default function AdminDashboard() {
 				toast.error("No user found with that email.");
 			}
 		} catch (error: unknown) {
+			console.error(error);
 			if (error instanceof Error) {
 				toast.error(error.message);
 			} else {
@@ -341,7 +324,7 @@ export default function AdminDashboard() {
 												: "text-gray-900",
 										)}
 									>
-										{foundUser.name}
+										{foundUser.full_name}
 									</h3>
 									<span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded tracking-wider">
 										{foundUser.role}

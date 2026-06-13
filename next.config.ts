@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-	/* config options here */
 	images: {
 		remotePatterns: [
 			{
@@ -19,6 +18,17 @@ const nextConfig: NextConfig = {
 				pathname: "/**",
 			},
 		],
+	},
+	// 👇 Here is the magical bridge!
+	async rewrites() {
+		return [
+			{
+				// Intercept any browser request starting with /api
+				source: "/api/:path*",
+				// Forward it secretly to NestJS
+				destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+			},
+		];
 	},
 };
 
