@@ -12,6 +12,7 @@ import {
 	Bell,
 	MessageSquare,
 	FileText,
+	Menu,
 	X,
 	User,
 	ShieldAlert,
@@ -68,7 +69,7 @@ export default function DashboardLayout({
 				setUser(data);
 			} catch (err) {
 				console.error("Failed to fetch user:", err);
-				toast.error("Session expired. Please log in again.");
+				toast.error("Session expired.");
 				router.push("/login");
 			} finally {
 				setIsLoading(false);
@@ -84,28 +85,26 @@ export default function DashboardLayout({
 				method: "POST",
 				credentials: "include",
 			});
-			toast.success("Successfully logged out!");
+			toast.success("Logged out!");
 			router.push("/");
 		} catch (error) {
 			console.error("Logout failed:", error);
-			toast.error("Logout failed. Please try again.");
+			toast.error("Failed to log out.");
 			router.push("/");
 		} finally {
 			setIsLoggingOut(false);
 		}
 	};
 
-	if (isLoading) {
+	if (isLoading)
 		return (
 			<div className="h-screen flex items-center justify-center">
 				Loading...
 			</div>
 		);
-	}
-
 	if (!user) return null;
 
-	const NAV_ITEMS = [
+	const visibleNavItems = [
 		{ icon: Home, label: "Dashboard", href: "/dashboard", visible: true },
 		{
 			icon: BookOpen,
@@ -155,9 +154,7 @@ export default function DashboardLayout({
 			href: "/dashboard/admin",
 			visible: user.role === "superadmin",
 		},
-	];
-
-	const visibleNavItems = NAV_ITEMS.filter((item) => item.visible);
+	].filter((i) => i.visible);
 
 	return (
 		<div className="flex h-screen bg-slate-50 font-sans">
@@ -182,8 +179,7 @@ export default function DashboardLayout({
 								href={item.href}
 								className={`flex items-center gap-3 px-4 py-3 rounded-lg ${pathname === item.href ? "bg-white/10" : "hover:bg-white/5"}`}
 							>
-								<item.icon size={20} />
-								{item.label}
+								<item.icon size={20} /> {item.label}
 							</Link>
 						))}
 					</nav>
@@ -207,8 +203,32 @@ export default function DashboardLayout({
 				</div>
 			</aside>
 
-			{/* Main Content */}
-			<main className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
+			{/* Main Content Area */}
+			<div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+				<header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm">
+					<button
+						className="lg:hidden p-2 text-slate-600"
+						onClick={() => setIsSidebarOpen(true)}
+					>
+						<Menu size={24} />
+					</button>
+					<h2 className="text-lg font-semibold text-slate-800">
+						{visibleNavItems.find((i) => i.href === pathname)?.label ||
+							"Dashboard"}
+					</h2>
+					<div className="flex items-center gap-4">
+						<Bell
+							size={20}
+							className="text-slate-500"
+						/>
+						<LetterAvatar
+							email={user.email}
+							size="sm"
+						/>
+					</div>
+				</header>
+				<main className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
+			</div>
 		</div>
 	);
 }
