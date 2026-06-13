@@ -56,7 +56,9 @@ export function ElectionPage() {
 		useState<Candidate | null>(null);
 
 	useEffect(() => {
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/elections/active`)
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/elections/active`, {
+			credentials: "include",
+		})
 			.then((res) => {
 				if (!res.ok) throw new Error("Server response error");
 				return res.json();
