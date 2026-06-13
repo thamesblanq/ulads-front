@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -24,7 +23,6 @@ const loginSchema = z.object({
 });
 
 export default function LoginPage() {
-	const router = useRouter();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -58,8 +56,7 @@ export default function LoginPage() {
 			}
 
 			toast.success("Welcome back!");
-			router.push("/dashboard");
-			router.refresh(); // Refresh the layout to reflect "logged in" state
+			window.location.href = "/dashboard"; // Full reload to ensure cookies are set
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Login failed.");
 		} finally {
