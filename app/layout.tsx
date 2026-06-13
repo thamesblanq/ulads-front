@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google"; // 👈 1. Import the modern font
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 // 2. Configure the font and name the variable exactly what CSS expects
 const jakarta = Plus_Jakarta_Sans({
@@ -28,6 +29,7 @@ export default function RootLayout({
 			{/* 3. Added font-sans here to ensure it applies globally */}
 			<body className="min-h-full flex flex-col font-sans">
 				{children}
+				<Analytics />
 				<Toaster
 					richColors
 					position="top-right"
