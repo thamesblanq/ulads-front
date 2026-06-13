@@ -35,7 +35,9 @@ export function AnnouncementPage() {
 	const [expandedId, setExpandedId] = useState<string | number | null>(null);
 
 	useEffect(() => {
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/announcements`)
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/announcements`, {
+			credentials: "include",
+		})
 			.then((res) => res.json())
 			.then((data) => {
 				console.log("Backend response:", data); // 👈 THIS WILL TELL US THE PROBLEM
