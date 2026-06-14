@@ -72,7 +72,7 @@ export default function ProfilePage({
 			: "/users/me";
 
 		try {
-			const response = await fetch(`api${targetEndpoint}`, {
+			const response = await fetch(`/api${targetEndpoint}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -98,7 +98,7 @@ export default function ProfilePage({
 			return;
 
 		try {
-			const response = await fetch(`api/users/me`, {
+			const response = await fetch(`/api/users/me`, {
 				method: "DELETE",
 				credentials: "include",
 			});

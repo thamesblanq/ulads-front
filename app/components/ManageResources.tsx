@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { Resource } from "@/types";
 
 const BRAND_BLUE = "#002B5B";
-const API_BASE_URL = "/api";
 
 export function ManageResources() {
 	const [resources, setResources] = useState<Resource[]>([]);
@@ -33,7 +32,7 @@ export function ManageResources() {
 	// 1. Core Fetch Logic (Added credentials: "include")
 	const fetchResources = useCallback(async () => {
 		try {
-			const res = await fetch(`${API_BASE_URL}/resources`, {
+			const res = await fetch(`/api/resources`, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
@@ -87,9 +86,7 @@ export function ManageResources() {
 		e.preventDefault();
 		setIsLoading(true);
 
-		const url = editingId
-			? `${API_BASE_URL}/resources/${editingId}`
-			: `${API_BASE_URL}/resources`;
+		const url = editingId ? `/api/resources/${editingId}` : `/api/resources`;
 
 		const method = editingId ? "PATCH" : "POST";
 
@@ -136,7 +133,7 @@ export function ManageResources() {
 			return;
 
 		try {
-			const res = await fetch(`${API_BASE_URL}/resources/${id}`, {
+			const res = await fetch(`/api/resources/${id}`, {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",

@@ -20,7 +20,7 @@ export function UserManagement() {
 		setFoundUser(null);
 
 		try {
-			const response = await fetch(`api/users`, {
+			const response = await fetch(`/api/users`, {
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -60,7 +60,7 @@ export function UserManagement() {
 	const handleRoleChange = async (newRole: string) => {
 		if (!foundUser) return;
 		try {
-			const response = await fetch(`api/users/${foundUser.id}/role`, {
+			const response = await fetch(`/api/users/${foundUser.id}/role`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -87,7 +87,7 @@ export function UserManagement() {
 			return;
 
 		try {
-			const response = await fetch(`api/users/${foundUser.id}/suspend`, {
+			const response = await fetch(`/api/users/${foundUser.id}/suspend`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -113,7 +113,7 @@ export function UserManagement() {
 		if (!window.confirm("CRITICAL: Wipe this user row entirely?")) return;
 
 		try {
-			const response = await fetch(`api/users/${foundUser.id}/hard-delete`, {
+			const response = await fetch(`/api/users/${foundUser.id}/hard-delete`, {
 				method: "DELETE",
 				credentials: "include",
 			});

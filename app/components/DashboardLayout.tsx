@@ -66,7 +66,7 @@ export default function DashboardLayout({
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
 		try {
-			await fetch(`api/auth/logout`, {
+			await fetch(`/api/auth/logout`, {
 				method: "POST",
 				credentials: "include",
 			});

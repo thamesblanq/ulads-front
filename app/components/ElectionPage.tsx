@@ -28,7 +28,7 @@ export function ElectionPage({
 		if (!election?.id) return;
 
 		try {
-			const res = await fetch(`api/elections/vote`, {
+			const res = await fetch(`/api/elections/vote`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({

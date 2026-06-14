@@ -14,7 +14,7 @@ export function SystemAuditLogs() {
 	const [totalCount, setTotalCount] = useState(0);
 
 	const fetchLogs = useCallback(async (page: number) => {
-		const response = await fetch(`api/logs?page=${page}&limit=10`, {
+		const response = await fetch(`/api/logs?page=${page}&limit=10`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

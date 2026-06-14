@@ -35,14 +35,11 @@ export default function AdminDashboard() {
 	// 1. REUSABLE FETCH LOGIC (Linter Safe)
 	// ==========================================
 	const fetchLogsData = useCallback(async (page: number) => {
-		const response = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/logs?page=${page}&limit=10`,
-			{
-				method: "GET",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-			},
-		);
+		const response = await fetch(`/api/logs?page=${page}&limit=10`, {
+			method: "GET",
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
+		});
 
 		if (!response.ok) throw new Error("Failed to fetch logs");
 		return await response.json();
@@ -113,7 +110,7 @@ export default function AdminDashboard() {
 		setFoundUser(null);
 
 		try {
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+			const response = await fetch(`/api/users`, {
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -157,15 +154,12 @@ export default function AdminDashboard() {
 	const handleRoleChange = async (newRole: string) => {
 		if (!foundUser) return;
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/users/${foundUser.id}/role`,
-				{
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({ role: newRole }),
-				},
-			);
+			const response = await fetch(`/api/users/${foundUser.id}/role`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ role: newRole }),
+			});
 
 			if (!response.ok) throw new Error("Failed to update role");
 
@@ -192,15 +186,12 @@ export default function AdminDashboard() {
 			return;
 
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/users/${foundUser.id}/suspend`,
-				{
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({ is_suspended: isSuspending }),
-				},
-			);
+			const response = await fetch(`/api/users/${foundUser.id}/suspend`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ is_suspended: isSuspending }),
+			});
 
 			if (!response.ok) throw new Error("Failed to update suspension status");
 
@@ -233,14 +224,11 @@ export default function AdminDashboard() {
 			return;
 
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/users/${foundUser.id}/hard-delete`,
-				{
-					method: "DELETE",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-				},
-			);
+			const response = await fetch(`/api/users/${foundUser.id}/hard-delete`, {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+			});
 
 			if (!response.ok) throw new Error("Failed to delete user");
 

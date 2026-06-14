@@ -31,7 +31,7 @@ export function CreateElectionForm({
 
 	// Call this after a successful creation to keep the list synced
 	const refreshElections = async () => {
-		const res = await fetch(`api/elections/all`, { credentials: "include" });
+		const res = await fetch(`/api/elections/all`, { credentials: "include" });
 		if (res.ok) setElections(await res.json());
 	};
 
@@ -40,7 +40,7 @@ export function CreateElectionForm({
 		e.preventDefault();
 		setIsCreating(true);
 		try {
-			const response = await fetch(`api/elections`, {
+			const response = await fetch(`/api/elections`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -77,7 +77,7 @@ export function CreateElectionForm({
 		try {
 			// STEP 1: Verify Email and get User ID
 			const usersResponse = await fetch(
-				`api/users/search-by-email?email=${encodeURIComponent(candidateEmail.trim())}`,
+				`/api/users/search-by-email?email=${encodeURIComponent(candidateEmail.trim())}`,
 				{
 					method: "GET",
 					headers: { "Content-Type": "application/json" },
@@ -108,7 +108,7 @@ export function CreateElectionForm({
 
 			// STEP 3: Link to election
 			const response = await fetch(
-				`api/elections/${targetElectionId}/candidates`,
+				`/api/elections/${targetElectionId}/candidates`,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
