@@ -165,9 +165,12 @@ export default function DashboardLayout({
 							<LetterAvatar email={user.email} />
 							<div className="flex-1 truncate">
 								<p className="font-semibold text-sm">
-									{user.full_name.split(" ")[0]}
+									{/* 👇 Add the question mark and a fallback string */}
+									{user.full_name?.split(" ")[0] || "Student"}
 								</p>
-								<p className="text-xs text-blue-200 capitalize">{user.role}</p>
+								<p className="text-xs text-blue-200 capitalize">
+									{user.role || "User"}
+								</p>
 							</div>
 							<button
 								onClick={handleLogout}
