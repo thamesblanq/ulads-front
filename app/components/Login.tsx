@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 // 1. Validation Schema
 const loginSchema = z.object({
@@ -26,6 +27,7 @@ export default function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
+	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +55,8 @@ export default function LoginPage() {
 			}
 
 			toast.success("Welcome back!");
-			window.location.href = "/dashboard"; // Full reload to ensure cookies are set
+			router.push("/dashboard");
+			router.refresh();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Login failed.");
 		} finally {
