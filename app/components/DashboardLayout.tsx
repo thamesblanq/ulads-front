@@ -49,19 +49,15 @@ export default function DashboardLayout({
 	children: React.ReactNode;
 	initialUser: UserProfile | null;
 }) {
-	const [user] = useState(initialUser);
-	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	// If middleware works, initialUser will never be null, but we keep this for safety
+	const user = initialUser;
 
 	const pathname = usePathname();
 	const router = useRouter();
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-	// Check for user existence
-	if (!user) {
-		// Redirect to login if no user data found
-		router.push("/login");
-		return null;
-	}
+	if (!user) return null;
 
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
@@ -73,7 +69,7 @@ export default function DashboardLayout({
 			toast.success("Logged out!");
 			router.push("/");
 		} catch (error) {
-			console.error("Logout error:", error);
+			console.error("Logout failed:", error);
 			toast.error("Logout failed.");
 		} finally {
 			setIsLoggingOut(false);
@@ -134,7 +130,6 @@ export default function DashboardLayout({
 
 	return (
 		<div className="flex h-screen bg-slate-50 font-sans">
-			{/* Sidebar */}
 			<aside
 				className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#002B5B] text-white transition-transform lg:relative lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
@@ -144,6 +139,7 @@ export default function DashboardLayout({
 						<button
 							onClick={() => setIsSidebarOpen(false)}
 							className="lg:hidden"
+							aria-label="Close sidebar"
 						>
 							<X size={24} />
 						</button>
@@ -165,7 +161,6 @@ export default function DashboardLayout({
 							<LetterAvatar email={user.email} />
 							<div className="flex-1 truncate">
 								<p className="font-semibold text-sm">
-									{/* 👇 Add the question mark and a fallback string */}
 									{user.full_name?.split(" ")[0] || "Student"}
 								</p>
 								<p className="text-xs text-blue-200 capitalize">
@@ -175,6 +170,7 @@ export default function DashboardLayout({
 							<button
 								onClick={handleLogout}
 								disabled={isLoggingOut}
+								aria-label="Logout"
 							>
 								<LogOut size={20} />
 							</button>
@@ -182,13 +178,12 @@ export default function DashboardLayout({
 					</div>
 				</div>
 			</aside>
-
-			{/* Main Content Area */}
 			<div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 				<header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 lg:px-8 shadow-sm">
 					<button
 						className="lg:hidden p-2 text-slate-600"
 						onClick={() => setIsSidebarOpen(true)}
+						aria-label="Open sidebar"
 					>
 						<Menu size={24} />
 					</button>
