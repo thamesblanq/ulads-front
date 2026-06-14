@@ -79,7 +79,7 @@ export const Hero = () => {
 								alt="ULADS Dental Clinic"
 								fill
 								priority // 👈 Added exactly where it needs to be!
-								sizes="(max-w-7xl) 50vw, 100vw"
+								sizes="(max-width: 1280px) 50vw, 100vw"
 								className="object-cover"
 							/>
 							<div className="absolute inset-0 bg-linear-to-t from-[#0A192F]/40 to-transparent" />
