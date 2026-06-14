@@ -17,9 +17,16 @@ export default async function AnnouncementsDashboardPage() {
 		cache: "no-store",
 	});
 
-	const data = res.ok ? await res.json() : [];
-	// Handle cases where data might be { data: [...] } or just an array
-	const announcements = Array.isArray(data) ? data : data.data || [];
+	// 1. Read the stream exactly ONCE
+	const text = await res.text();
+
+	// 2. Parse it safely
+	const parsedData = res.ok && text ? JSON.parse(text) : [];
+
+	// 3. Handle cases where data might be { data: [...] } or just an array
+	const announcements = Array.isArray(parsedData)
+		? parsedData
+		: parsedData.data || [];
 
 	return (
 		<div className="p-4 lg:p-8">

@@ -13,7 +13,8 @@ export default async function Page() {
 			cache: "no-store",
 		},
 	);
-	const election = res.ok ? await res.json() : null;
+	const text = await res.text();
+	const election = res.ok && text ? JSON.parse(text) : null;
 
 	// 2. Fetch voted positions if election exists
 	let votedPositions = [];
@@ -25,7 +26,8 @@ export default async function Page() {
 				cache: "no-store",
 			},
 		);
-		votedPositions = voteRes.ok ? await voteRes.json() : [];
+		const voteText = await voteRes.text();
+		votedPositions = voteRes.ok && voteText ? JSON.parse(voteText) : [];
 	}
 
 	return (

@@ -15,7 +15,8 @@ export default async function Page() {
 		cache: "no-store",
 	});
 
-	const user = res.ok ? await res.json() : null;
+	const text = await res.text();
+	const user = res.ok && text ? JSON.parse(text) : null;
 
 	return <ProfilePage initialUser={user} />;
 }

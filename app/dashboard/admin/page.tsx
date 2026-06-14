@@ -16,7 +16,8 @@ export default async function AdminDashboardPage() {
 		cache: "no-store",
 	});
 
-	const elections = res.ok ? await res.json() : [];
+	const text = await res.text();
+	const elections = res.ok && text ? JSON.parse(text) : [];
 
 	return (
 		<div className="max-w-7xl mx-auto space-y-12 py-4 animate-in fade-in duration-300">

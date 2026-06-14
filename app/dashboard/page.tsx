@@ -16,9 +16,12 @@ export default async function Page() {
 			cache: "no-store",
 		}),
 	]);
+	const userText = await userRes.text();
+	const electionText = await electionRes.text();
 
-	const user = userRes.ok ? await userRes.json() : null;
-	const activeElection = electionRes.ok ? await electionRes.json() : null;
+	const user = userRes.ok && userText ? JSON.parse(userText) : null;
+	const activeElection =
+		electionRes.ok && electionText ? JSON.parse(electionText) : null;
 
 	return (
 		<DashboardPage

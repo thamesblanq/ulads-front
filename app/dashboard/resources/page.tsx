@@ -17,7 +17,8 @@ export default async function ResourcesDashboardPage() {
 		cache: "no-store",
 	});
 
-	const resources = res.ok ? await res.json() : [];
+	const text = await res.text();
+	const resources = res.ok && text ? JSON.parse(text) : [];
 
 	return <ResourcePage initialResources={resources} />;
 }

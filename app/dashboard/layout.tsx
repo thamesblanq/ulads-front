@@ -28,7 +28,8 @@ export default async function Layout({
 
 	// 3. If unauthorized, the DashboardLayout will handle the redirection
 	// or you can handle it here by returning a login redirect
-	const user = res.ok ? await res.json() : null;
+	const text = await res.text();
+	const user = res.ok && text ? JSON.parse(text) : null;
 
 	return <DashboardLayout initialUser={user}>{children}</DashboardLayout>;
 }
