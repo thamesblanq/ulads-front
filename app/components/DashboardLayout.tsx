@@ -153,6 +153,7 @@ export default function DashboardLayout({
 							<Link
 								key={item.href}
 								href={item.href}
+								onClick={() => setIsSidebarOpen(false)}
 								className={`flex items-center gap-3 px-4 py-3 rounded-lg ${pathname === item.href ? "bg-white/10" : "hover:bg-white/5"}`}
 							>
 								<item.icon size={20} /> {item.label}
