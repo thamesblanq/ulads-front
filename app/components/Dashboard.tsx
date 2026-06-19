@@ -15,16 +15,13 @@ const fetcher = (url: string) =>
 export default function DashboardPage() {
 	// 2. Fetch User (SWR automatically shares the cache with the Layout!)
 	const { data: userData, isLoading: isUserLoading } = useSWR<UserProfile>(
-		`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
+		`/api/users/me`,
 		fetcher,
 	);
 
 	// 3. Fetch Elections
 	const { data: activeElection, isLoading: isElectionLoading } =
-		useSWR<ActiveElection>(
-			`${process.env.NEXT_PUBLIC_API_URL}/elections/active`,
-			fetcher,
-		);
+		useSWR<ActiveElection>(`/api/elections/active`, fetcher);
 
 	const getElectionSubtitle = (): string => {
 		if (!activeElection) return "No active elections";

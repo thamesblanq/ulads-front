@@ -66,10 +66,7 @@ export default function DashboardLayout({
 		data: user,
 		error,
 		isLoading,
-	} = useSWR<UserProfile>(
-		`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-		fetcher,
-	);
+	} = useSWR<UserProfile>(`/api/users/me`, fetcher);
 
 	// 3. Security Check: If token is dead/tampered, clear it and kick to login
 	useEffect(() => {
