@@ -1,5 +1,5 @@
 // app/dashboard/announcements/loading.tsx
-import { AnnouncementSkeleton } from "../../components/AnnouncementSkeleton";
+import { AnnouncementSkeleton } from "../../components/skeletons/AnnouncementSkeleton";
 
 export default function Loading() {
 	return (

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import useSWR from "swr";
 import { toast } from "sonner";
 import {
 	Home,
@@ -19,6 +20,14 @@ import {
 	LogOut,
 } from "lucide-react";
 import { UserProfile } from "@/types";
+import { DashboardShellSkeleton } from "./skeletons/DashboardShellSkeleton";
+
+// 1. Create the SWR fetcher. credentials: "include" sends your JWT cookie!
+const fetcher = (url: string) =>
+	fetch(url, { credentials: "include" }).then((res) => {
+		if (!res.ok) throw new Error("Failed to fetch user");
+		return res.json();
+	});
 
 const LetterAvatar = ({
 	email,
@@ -44,20 +53,42 @@ const LetterAvatar = ({
 
 export default function DashboardLayout({
 	children,
-	initialUser,
 }: {
 	children: React.ReactNode;
-	initialUser: UserProfile | null;
 }) {
-	// If middleware works, initialUser will never be null, but we keep this for safety
-	const user = initialUser;
-
 	const pathname = usePathname();
 	const router = useRouter();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-	if (!user) return null;
+	// 2. Client-Side Data Fetching
+	const {
+		data: user,
+		error,
+		isLoading,
+	} = useSWR<UserProfile>(
+		`${process.env.NEXT_PUBLIC_API_URL}/users/me`,
+		fetcher,
+	);
+
+	// 3. Security Check: If token is dead/tampered, clear it and kick to login
+	useEffect(() => {
+		if (error) {
+			// Silently hit logout to kill the bad cookie, preventing an infinite redirect loop
+			fetch(`/api/auth/logout`, {
+				method: "POST",
+				credentials: "include",
+			}).finally(() => {
+				toast.error("Session expired. Please log in again.");
+				router.push("/login");
+			});
+		}
+	}, [error, router]);
+
+	// 4. Instantly show the skeleton while waiting for the backend (or while redirecting)
+	if (isLoading || error || !user) {
+		return <DashboardShellSkeleton />;
+	}
 
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
@@ -128,6 +159,10 @@ export default function DashboardLayout({
 		},
 	].filter((i) => i.visible);
 
+	const userName = user.is_profile_complete
+		? user.full_name?.split(" ")[0]
+		: user.email?.split("@")[0];
+
 	return (
 		<div className="flex h-screen bg-slate-50 font-sans">
 			<aside
@@ -160,9 +195,7 @@ export default function DashboardLayout({
 						<div className="flex items-center gap-3">
 							<LetterAvatar email={user.email} />
 							<div className="flex-1 truncate">
-								<p className="font-semibold text-sm">
-									{user.full_name?.split(" ")[0] || "Student"}
-								</p>
+								<p className="font-semibold text-sm">{userName}</p>
 								<p className="text-xs text-blue-200 capitalize">
 									{user.role || "User"}
 								</p>
@@ -202,6 +235,27 @@ export default function DashboardLayout({
 						/>
 					</div>
 				</header>
+
+				{/* Incomplete Profile Banner */}
+				{user.is_profile_complete === false &&
+					pathname !== "/dashboard/profile" && (
+						<div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+							<div className="flex items-center gap-3">
+								<ShieldAlert className="text-yellow-600 w-5 h-5 shrink-0" />
+								<p className="text-sm text-yellow-800">
+									Your profile is incomplete. Please update your details to
+									fully access the portal.
+								</p>
+							</div>
+							<Link
+								href="/dashboard/profile"
+								className="text-sm font-bold text-yellow-700 hover:text-yellow-900 underline whitespace-nowrap"
+							>
+								Complete Profile
+							</Link>
+						</div>
+					)}
+
 				<main className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</main>
 			</div>
 		</div>

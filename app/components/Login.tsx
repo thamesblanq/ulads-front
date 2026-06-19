@@ -56,10 +56,8 @@ export default function LoginPage() {
 
 			toast.success("Welcome back!");
 			router.push("/dashboard");
-			router.refresh();
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Login failed.");
-		} finally {
 			setIsLoading(false);
 		}
 	};

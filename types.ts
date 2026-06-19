@@ -8,6 +8,7 @@ export interface UserProfile {
 	role: string;
 	isSuspended: boolean;
 	avatar: string;
+	is_profile_complete: boolean;
 }
 
 export interface ManifestoModalProps {

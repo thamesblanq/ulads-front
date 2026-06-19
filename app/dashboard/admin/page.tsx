@@ -4,7 +4,7 @@ import { CreateElectionForm } from "../../components/CreateElectionForm";
 import { ManageResources } from "../../components/ManageResources";
 import { SystemAuditLogs } from "../../components/SystemAuditLogs";
 import { Suspense } from "react";
-import { AuditSkeleton } from "@/app/components/AuditSkeleton";
+import { AuditSkeleton } from "@/app/components/skeletons/AuditSkeleton";
 
 export default async function AdminDashboardPage() {
 	const cookieStore = await cookies();
