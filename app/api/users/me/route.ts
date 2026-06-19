@@ -14,16 +14,18 @@ export async function GET() {
 		});
 
 		if (!res.ok) {
+			const errorText = await res.text();
 			return NextResponse.json(
-				{ error: "Unauthorized" },
+				{ error: errorText || "Backend returned an error" },
 				{ status: res.status },
 			);
 		}
 
-		const data = await res.json();
+		const text = await res.text();
+		const data = text ? JSON.parse(text) : null;
+
 		return NextResponse.json(data);
 	} catch (error) {
-		// ✅ Strictly typing and checking the error instance
 		if (error instanceof Error) {
 			return NextResponse.json({ error: error.message }, { status: 500 });
 		}
