@@ -7,14 +7,15 @@ import {
 	Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ActiveElection as Election } from "@/types";
+import { AdminElection } from "@/types"; // 👈 Updated to AdminElection
 
 export function CreateElectionForm({
 	initialElections,
 }: {
-	initialElections: Election[];
+	initialElections: AdminElection[];
 }) {
-	const [elections, setElections] = useState<Election[]>(initialElections);
+	const [elections, setElections] = useState<AdminElection[]>(initialElections);
+
 	// --- Election Creation State ---
 	const [title, setTitle] = useState("");
 	const [startTime, setStartTime] = useState("");
@@ -29,13 +30,16 @@ export function CreateElectionForm({
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [isRegistering, setIsRegistering] = useState(false);
 
-	// Call this after a successful creation to keep the list synced
+	// 👇 NEW: Filter out elections whose end_time has passed
+	const validElections = elections.filter(
+		(election) => new Date(election.end_time) > new Date(),
+	);
+
 	const refreshElections = async () => {
 		const res = await fetch(`/api/elections/all`, { credentials: "include" });
 		if (res.ok) setElections(await res.json());
 	};
 
-	// Update handleCreateElection to refresh internal state
 	const handleCreateElection = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsCreating(true);
@@ -53,7 +57,7 @@ export function CreateElectionForm({
 
 			if (!response.ok) throw new Error("Could not create election.");
 			toast.success("Election successfully scheduled!");
-			await refreshElections(); // Sync the dropdown
+			await refreshElections();
 			setTitle("");
 			setStartTime("");
 			setEndTime("");
@@ -65,7 +69,6 @@ export function CreateElectionForm({
 		}
 	};
 
-	// 3. Handle Register Candidate
 	const handleRegisterCandidate = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!targetElectionId || !candidateEmail || !position) return;
@@ -75,7 +78,6 @@ export function CreateElectionForm({
 		let actualUserId = "";
 
 		try {
-			// STEP 1: Verify Email and get User ID
 			const usersResponse = await fetch(
 				`/api/users/search-by-email?email=${encodeURIComponent(candidateEmail.trim())}`,
 				{
@@ -90,7 +92,6 @@ export function CreateElectionForm({
 			const matchedUser = await usersResponse.json();
 			actualUserId = matchedUser.id;
 
-			// STEP 2: Upload to Cloudinary
 			if (imageFile) {
 				const imgPayload = new FormData();
 				imgPayload.append("file", imageFile);
@@ -106,7 +107,6 @@ export function CreateElectionForm({
 				uploadedImageUrl = imgData.secure_url;
 			}
 
-			// STEP 3: Link to election
 			const response = await fetch(
 				`/api/elections/${targetElectionId}/candidates`,
 				{
@@ -145,7 +145,6 @@ export function CreateElectionForm({
 
 	return (
 		<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-			{/* Form A: Schedule Election */}
 			<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
 				<h3 className="text-lg font-bold text-[#002B5B] flex items-center gap-2">
 					<PlusCircle className="size-5" /> Schedule New Election
@@ -207,7 +206,6 @@ export function CreateElectionForm({
 				</form>
 			</div>
 
-			{/* Form B: Add Candidate */}
 			<div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
 				<h3 className="text-lg font-bold text-[#002B5B] flex items-center gap-2">
 					<UserPlus className="size-5" /> Add Candidate Pointers
@@ -229,7 +227,8 @@ export function CreateElectionForm({
 							>
 								Select Target Election...
 							</option>
-							{elections.map((election) => (
+							{/* 👇 NEW: We use validElections here instead of all elections */}
+							{validElections.map((election) => (
 								<option
 									key={election.id}
 									value={election.id}

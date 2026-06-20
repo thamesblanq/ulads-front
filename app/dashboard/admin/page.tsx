@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { UserManagement } from "../../components/UserManagement";
 import { CreateElectionForm } from "../../components/CreateElectionForm";
+import { ElectionManagement } from "../../components/ElectionManagement"; // 👈 Import new component
 import { ManageResources } from "../../components/ManageResources";
 import { SystemAuditLogs } from "../../components/SystemAuditLogs";
 import { Suspense } from "react";
@@ -22,6 +23,7 @@ export default async function AdminDashboardPage() {
 	return (
 		<div className="max-w-7xl mx-auto space-y-12 py-4 animate-in fade-in duration-300">
 			<UserManagement />
+
 			<section className="pt-8 border-t border-gray-200 space-y-6">
 				<div>
 					<h2 className="text-xl font-bold text-[#002B5B]">
@@ -29,11 +31,16 @@ export default async function AdminDashboardPage() {
 					</h2>
 					<p className="text-xs text-gray-500">
 						Configure election events, handle real-time candidate data entry,
-						and configure hosted web flyers.
+						and approve them for deployment.
 					</p>
 				</div>
+				{/* Your forms */}
 				<CreateElectionForm initialElections={elections} />
+
+				{/* 👇 Your NEW table component 👇 */}
+				<ElectionManagement initialElections={elections} />
 			</section>
+
 			<section className="pt-8 border-t border-gray-200">
 				<ManageResources />
 			</section>
