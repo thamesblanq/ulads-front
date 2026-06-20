@@ -44,14 +44,16 @@ export function CreateElectionForm({
 		e.preventDefault();
 		setIsCreating(true);
 		try {
+			const globalStartTime = new Date(startTime).toISOString();
+			const globalEndTime = new Date(endTime).toISOString();
 			const response = await fetch(`/api/elections`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
 				body: JSON.stringify({
 					title,
-					start_time: startTime,
-					end_time: endTime,
+					start_time: globalStartTime,
+					end_time: globalEndTime,
 				}),
 			});
 
