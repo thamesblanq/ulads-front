@@ -11,9 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { SystemLog, UserProfile } from "@/types";
-
-// 1. Strictly define our Types
+import { SystemLog, UserProfile, AdminElection } from "@/types";
 
 export default function AdminDashboard() {
 	// Search & UI States
@@ -21,6 +19,10 @@ export default function AdminDashboard() {
 	const [isSearching, setIsSearching] = useState(false);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+
+	// Election States
+	const [elections, setElections] = useState<AdminElection[]>([]);
+	const [isLoadingElections, setIsLoadingElections] = useState(true);
 
 	// Data States
 	const [foundUser, setFoundUser] = useState<UserProfile | null>(null);
@@ -43,6 +45,26 @@ export default function AdminDashboard() {
 
 		if (!response.ok) throw new Error("Failed to fetch logs");
 		return await response.json();
+	}, []);
+
+	// 👇 FIXED: Added a flag so we only trigger setState on manual refresh
+	const fetchAllElections = useCallback(async (isManualRefresh = false) => {
+		if (isManualRefresh) {
+			setIsLoadingElections(true);
+		}
+
+		try {
+			const response = await fetch(`/api/elections/all`, {
+				credentials: "include",
+			});
+			if (!response.ok) throw new Error("Failed to fetch elections");
+			setElections(await response.json());
+		} catch (error) {
+			console.error(error);
+			toast.error("Could not load elections list.");
+		} finally {
+			setIsLoadingElections(false);
+		}
 	}, []);
 
 	// ==========================================
@@ -78,7 +100,43 @@ export default function AdminDashboard() {
 		return () => {
 			isMounted = false;
 		};
-	}, [currentPage, fetchLogsData]); // Automatically re-runs when currentPage changes
+	}, [currentPage, fetchLogsData]);
+
+	// 👇 FIXED: This now safely loads initially without causing cascading renders
+	useEffect(() => {
+		let isMounted = true;
+
+		const loadElections = async () => {
+			if (isMounted) {
+				setIsLoadingElections(true);
+			}
+
+			try {
+				const response = await fetch(`/api/elections/all`, {
+					credentials: "include",
+				});
+				if (!response.ok) throw new Error("Failed to fetch elections");
+				if (isMounted) {
+					setElections(await response.json());
+				}
+			} catch (error) {
+				console.error(error);
+				if (isMounted) {
+					toast.error("Could not load elections list.");
+				}
+			} finally {
+				if (isMounted) {
+					setIsLoadingElections(false);
+				}
+			}
+		};
+
+		loadElections();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
 	// ==========================================
 	// 3. MANUAL REFRESH
@@ -244,6 +302,35 @@ export default function AdminDashboard() {
 		}
 	};
 
+	// ==========================================
+	// 8. ELECTION TOGGLE
+	// ==========================================
+	const handleToggleElectionStatus = async (
+		electionId: string,
+		currentStatus: boolean,
+	) => {
+		const newStatus = !currentStatus;
+		try {
+			const response = await fetch(`/api/elections/${electionId}/status`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ is_active: newStatus }),
+			});
+			if (!response.ok) throw new Error("Failed to update status");
+
+			setElections((prev) =>
+				prev.map((el) =>
+					el.id === electionId ? { ...el, is_active: newStatus } : el,
+				),
+			);
+			toast.success(`Election is now ${newStatus ? "Approved" : "Drafted"}`);
+		} catch (error) {
+			console.error(error);
+			toast.error("Could not update election status.");
+		}
+	};
+
 	return (
 		<div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
 			{/* SECTION 1: User Search & Management */}
@@ -282,7 +369,6 @@ export default function AdminDashboard() {
 				{foundUser && (
 					<div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
 						<div className="p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center gap-6">
-							{/* Avatar & Shadowban Indicator */}
 							<div className="relative">
 								<div
 									className={cn(
@@ -301,7 +387,6 @@ export default function AdminDashboard() {
 								)}
 							</div>
 
-							{/* User Details */}
 							<div className="flex-1 space-y-1 w-full">
 								<div className="flex items-center gap-3">
 									<h3
@@ -336,9 +421,7 @@ export default function AdminDashboard() {
 								</div>
 							</div>
 
-							{/* Admin Actions */}
 							<div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-4 lg:mt-0 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
-								{/* Role Changer Dropdown */}
 								<select
 									value={foundUser.role}
 									onChange={(e) => handleRoleChange(e.target.value)}
@@ -348,8 +431,6 @@ export default function AdminDashboard() {
 									<option value="admin">Role: Admin</option>
 									<option value="superadmin">Role: Superadmin</option>
 								</select>
-
-								{/* Shadowban Button */}
 								<button
 									onClick={handleToggleSuspend}
 									className={cn(
@@ -366,8 +447,6 @@ export default function AdminDashboard() {
 									)}
 									{foundUser.isSuspended ? "Restore User" : "Suspend User"}
 								</button>
-
-								{/* Hard Delete Button */}
 								<button
 									onClick={handleHardDelete}
 									className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors border border-red-100"
@@ -380,7 +459,122 @@ export default function AdminDashboard() {
 				)}
 			</section>
 
-			{/* SECTION 2: System Activity Logs */}
+			{/* SECTION 2: Election Management */}
+			<section className="space-y-4 pt-8 border-t border-gray-200">
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-xl font-bold text-[#002B5B]">
+							Election Management
+						</h2>
+						<p className="text-sm text-gray-500">
+							Approve elections to make them visible during their active dates.
+						</p>
+					</div>
+					{/* 👇 FIXED: Passes `true` to show the loading spinner on manual refresh */}
+					<button
+						onClick={() => fetchAllElections(true)}
+						className="text-gray-400 hover:text-[#002B5B]"
+					>
+						<RefreshCw
+							className={cn("size-4", isLoadingElections && "animate-spin")}
+						/>
+					</button>
+				</div>
+
+				<div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto">
+					<table className="w-full text-left">
+						<thead>
+							<tr className="bg-gray-50/80 border-b border-gray-200">
+								<th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+									Title
+								</th>
+								<th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+									Start Time
+								</th>
+								<th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+									End Time
+								</th>
+								<th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-center">
+									Status
+								</th>
+								<th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-center">
+									Action
+								</th>
+							</tr>
+						</thead>
+						<tbody className="divide-y divide-gray-100">
+							{isLoadingElections ? (
+								<tr>
+									<td
+										colSpan={5}
+										className="text-center py-8 text-gray-500 animate-pulse"
+									>
+										Loading elections...
+									</td>
+								</tr>
+							) : elections.length === 0 ? (
+								<tr>
+									<td
+										colSpan={5}
+										className="text-center py-8 text-gray-500"
+									>
+										No elections found.
+									</td>
+								</tr>
+							) : (
+								elections.map((election) => (
+									<tr
+										key={election.id}
+										className="hover:bg-gray-50/50"
+									>
+										<td className="px-6 py-4 font-bold text-gray-900">
+											{election.title}
+										</td>
+										<td className="px-6 py-4 text-gray-600">
+											{new Date(election.start_time).toLocaleString()}
+										</td>
+										<td className="px-6 py-4 text-gray-600">
+											{new Date(election.end_time).toLocaleString()}
+										</td>
+										<td className="px-6 py-4 text-center">
+											<span
+												className={cn(
+													"px-2.5 py-1 rounded-full text-[10px] font-bold uppercase",
+													election.is_active
+														? "bg-green-100 text-green-700"
+														: "bg-gray-100 text-gray-600",
+												)}
+											>
+												{election.is_active ? "Approved" : "Draft"}
+											</span>
+										</td>
+										<td className="px-6 py-4 text-center">
+											<button
+												onClick={() =>
+													handleToggleElectionStatus(
+														election.id,
+														election.is_active,
+													)
+												}
+												className={cn(
+													"px-4 py-1.5 rounded-lg text-xs font-bold border",
+													election.is_active
+														? "bg-orange-50 text-orange-700 border-orange-200"
+														: "bg-[#002B5B] text-white border-[#002B5B]",
+												)}
+											>
+												{election.is_active ? "Revoke" : "Approve"}
+											</button>
+										</td>
+									</tr>
+								))
+							)}
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			{/* SECTION 3: System Activity Logs */}
 			<section className="space-y-4 pt-8 border-t border-gray-200">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">

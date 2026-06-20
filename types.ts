@@ -25,6 +25,14 @@ export interface Candidate {
 	votes: number;
 }
 
+export interface AdminElection {
+	id: string;
+	title: string;
+	start_time: string;
+	end_time: string;
+	is_active: boolean;
+}
+
 export interface ActiveElection {
 	id: string;
 	title: string;
