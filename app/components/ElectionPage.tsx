@@ -110,22 +110,26 @@ function ManifestoModal({ candidate, onClose }: ManifestoModalProps) {
 	const points = candidate.manifesto
 		? candidate.manifesto.split("\n").filter((p) => p.trim() !== "")
 		: [];
+
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/45 backdrop-blur-sm"
+			className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/45 backdrop-blur-sm"
 			onClick={onClose}
 		>
 			<div
-				className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+				// 👇 Added flex, flex-col, and max-h-[90vh] to restrict modal height
+				className="relative bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl flex flex-col max-h-[90vh]"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<button
 					onClick={onClose}
-					className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+					className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer z-10"
 				>
 					<X className="w-5 h-5" />
 				</button>
-				<div className="flex items-center gap-4 mb-6">
+
+				{/* Header Section - Shrink-0 keeps it from squishing */}
+				<div className="flex items-center gap-4 mb-6 shrink-0">
 					<Image
 						src={candidate.imageUrl}
 						alt={candidate.name}
@@ -141,21 +145,33 @@ function ManifestoModal({ candidate, onClose }: ManifestoModalProps) {
 						</span>
 					</div>
 				</div>
-				<h3 className="text-gray-700 mb-3 font-semibold text-sm">
+
+				<h3 className="text-gray-700 mb-3 font-semibold text-sm shrink-0">
 					Key Commitments
 				</h3>
-				<ul className="flex flex-col gap-3">
-					{points.map((point, i) => (
-						<li
-							key={i}
-							className="flex items-start gap-3"
-						>
-							<span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white mt-0.5 bg-[#002B5B] text-[10px]">
-								{i + 1}
-							</span>
-							<p className="text-gray-600 text-sm leading-snug">{point}</p>
-						</li>
-					))}
+
+				{/* 👇 Added overflow-y-auto to this container so the text scrolls! */}
+				<ul className="flex flex-col gap-3 overflow-y-auto pr-2 pb-2">
+					{points.length > 0 ? (
+						points.map((point, i) => (
+							<li
+								key={i}
+								className="flex items-start gap-3"
+							>
+								<span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white mt-0.5 bg-[#002B5B] text-[10px]">
+									{i + 1}
+								</span>
+								{/* 👇 Added break-words so giant words wrap instead of spilling */}
+								<p className="text-gray-600 text-sm leading-snug wrap-break-word">
+									{point}
+								</p>
+							</li>
+						))
+					) : (
+						<p className="text-sm text-gray-400 italic">
+							No manifesto provided.
+						</p>
+					)}
 				</ul>
 			</div>
 		</div>
