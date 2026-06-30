@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -9,25 +10,25 @@ export function SystemAuditLogs() {
 	const [logs, setLogs] = useState<SystemLog[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalCount, setTotalCount] = useState(0);
 
-	const fetchLogs = useCallback(async (page: number) => {
-		const response = await fetch(`/api/logs?page=${page}&limit=10`, {
+	// --- Cursor Pagination States ---
+	const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+	const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
+	const [nextCursor, setNextCursor] = useState<string | null>(null);
+	const [hasNextPage, setHasNextPage] = useState(false);
+
+	const fetchLogs = useCallback(async (cursorStr: string | null) => {
+		const url = cursorStr
+			? `/api/logs?limit=10&cursor=${encodeURIComponent(cursorStr)}`
+			: `/api/logs?limit=10`;
+
+		const response = await fetch(url, {
 			method: "GET",
-			headers: {
-				"Content-Type": "application/json",
-				// Authorization: `Bearer ${localStorage.getItem('token')}` // Uncomment if using localStorage JWT
-			},
-			credentials: "include", // This is crucial for cookie-based sessions!
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
 		});
 
 		if (!response.ok) {
-			console.error(
-				"Backend rejected the logs fetch. Status:",
-				response.status,
-			);
 			throw new Error("Could not parse audit data stream.");
 		}
 
@@ -35,12 +36,15 @@ export function SystemAuditLogs() {
 	}, []);
 
 	const loadLogState = useCallback(
-		async (page: number, showSuccessToast = false) => {
+		async (cursorToFetch: string | null, showSuccessToast = false) => {
+			setIsLoading(true);
 			try {
-				const res = await fetchLogs(page);
+				const res = await fetchLogs(cursorToFetch);
+
 				setLogs(res.data);
-				setTotalPages(res.meta.lastPage);
-				setTotalCount(res.meta.total);
+				setNextCursor(res.meta.nextCursor);
+				setHasNextPage(res.meta.hasNextPage);
+
 				if (showSuccessToast) {
 					toast.success("System activity matrix synchronized.");
 				}
@@ -55,12 +59,52 @@ export function SystemAuditLogs() {
 		[fetchLogs],
 	);
 
+	// Initial Load
 	useEffect(() => {
-		const loadLogs = async () => {
-			await loadLogState(currentPage);
+		let isMounted = true;
+		const init = async () => {
+			try {
+				const res = await fetchLogs(null);
+				if (isMounted) {
+					setLogs(res.data);
+					setNextCursor(res.meta.nextCursor);
+					setHasNextPage(res.meta.hasNextPage);
+				}
+			} catch (err) {
+				console.error(err);
+				if (isMounted) toast.error("Failed to load audit logs.");
+			} finally {
+				if (isMounted) setIsLoading(false);
+			}
 		};
-		loadLogs();
-	}, [currentPage, loadLogState]);
+		init();
+		return () => {
+			isMounted = false;
+		};
+	}, [fetchLogs]);
+
+	// --- Navigation Handlers ---
+	const handleNext = () => {
+		if (!hasNextPage || !nextCursor) return;
+		setCursorHistory((prev) => [...prev, currentCursor]);
+		setCurrentCursor(nextCursor);
+		loadLogState(nextCursor);
+	};
+
+	const handlePrev = () => {
+		if (cursorHistory.length === 0) return;
+		const newHistory = [...cursorHistory];
+		const previousCursor = newHistory.pop() || null;
+
+		setCursorHistory(newHistory);
+		setCurrentCursor(previousCursor);
+		loadLogState(previousCursor);
+	};
+
+	const handleRefresh = () => {
+		setIsRefreshing(true);
+		loadLogState(currentCursor, true);
+	};
 
 	return (
 		<div className="space-y-4">
@@ -69,10 +113,7 @@ export function SystemAuditLogs() {
 					System Operation Logs
 				</h3>
 				<button
-					onClick={() => {
-						setIsRefreshing(true);
-						loadLogState(currentPage, true);
-					}}
+					onClick={handleRefresh}
 					disabled={isRefreshing}
 					className="p-2 border border-gray-200 hover:border-[#002B5B] rounded-xl bg-white text-gray-400 hover:text-[#002B5B] transition-all"
 				>
@@ -168,21 +209,20 @@ export function SystemAuditLogs() {
 
 				<div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 font-medium">
 					<p>
-						Page <span className="font-bold text-gray-900">{currentPage}</span>{" "}
-						of <span className="font-bold text-gray-900">{totalPages}</span> (
-						{totalCount} entries)
+						Cursor Mode <span className="font-bold text-gray-900 px-1">•</span>{" "}
+						Optimized Stream
 					</p>
 					<div className="flex gap-2">
 						<button
-							onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-							disabled={currentPage === 1 || isLoading}
+							onClick={handlePrev}
+							disabled={cursorHistory.length === 0 || isLoading}
 							className="px-3 py-1 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
 						>
 							Prev
 						</button>
 						<button
-							onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-							disabled={currentPage >= totalPages || isLoading}
+							onClick={handleNext}
+							disabled={!hasNextPage || isLoading}
 							className="px-3 py-1 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
 						>
 							Next
